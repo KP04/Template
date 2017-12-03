@@ -43,20 +43,23 @@
 </header>
 
 <h2>グループ</h2>
-グループ作成書類: <a href="../GrepX/index.html">GrepX</a><br>
+グループ作成書類: <a href="../GrepX/index.html">Grep6</a><br>
 メンバーと役割分担: 
 <ul>
-<li>名工大輔 26115000: 課題X-1 考察担当，課題X-4 GUI実装担当
+<li>佐藤 嵩晟 27115064: 課題6-3 GUI実装担当、課題6-5実装担当
+<li>塩谷 昂平 27115069: 課題6-1 考察担当
+<li>瀬戸口 大貴 27115085: 課題6-2 実装担当
+<li>長谷川 達也 27115126: 課題6-4 考察担当
 <li><a href="../../../../ckb15999/workspace/kprep/repX/index.html">名工太郎 24115999</a>: 課題X-1 実装担当，課題X-2 考察担当，グループ作成書類担当
 </ul>
 
 <h2>ソースファイル</h2>
 <ul>
-  <li><a href="../../RuleBaseSystem/src/RuleBaseSystem.java">RuleBaseSystem.java</a>
-  <li><a href="../../RuleBaseSystem/src/ForwardChain.java">ForwardChain.java</a>
-  <li><a href="../../RuleBaseSystem/src/BackwardChain.java">BackwardChain.java</a>
-  <li><a href="../../RuleBaseSystem/src/Unify.java">Unify.java</a>
-  <li><a href="../../RuleBaseSystem/src/FileLoading.java">FileLoading.java</a>
+  <li><a href="../../RuleBaseSystem/src/RuleBaseSystem.java">RuleBaseSystem.java(GUI)</a>
+  <li><a href="../../RuleBaseSystem/src/ForwardChain.java">ForwardChain.java(前向き推論)</a>
+  <li><a href="../../RuleBaseSystem/src/BackwardChain.java">BackwardChain.java(後ろ向き推論)</a>
+  <li><a href="../../RuleBaseSystem/src/Unify.java">Unify.java(パターンマッチング)</a>
+  <li><a href="../../RuleBaseSystem/src/FileLoading.java">FileLoading.java(ファイル読み込み)</a>
 
     <!-- 実装・変更したソースファイルへのリンク．修正する． -->
     <!-- ※ リンクは絶対パスに変更せず，上記のような相対パスのままで！ -->
@@ -64,7 +67,7 @@
 
 <hr>
 
-<h2>課題6-3</h2>
+<h2>必須課題6-3</h2>
 <!-- 課題を書く．-->
 上記6-2で実装した質問応答システムのGUIを作成せよ．<br>
 質問に答える際の推論過程を可視化できることが望ましい．
@@ -73,22 +76,7 @@
 <!--
  もし自分で独自に決めた仕様があれば，その説明を書く．
 -->
-<p>課題に加えて，以下の三点を独自仕様として組み込んだ．</p>
-
-<ol>
-  <li>与えられた数がフィボナッチ数かどうかを判定する</li>
-  <li>N番目のフィボナッチ数だけではなく，N番目までのフィボナッチ数列を返す</li>
-  <li>フィボナッチ数の一般項を用いてN番目のフィボナッチ数を求める</li>
-</ol>
-
-<p>
-  1.に関して，ユーザーから数字が与えられた時，それがフィボナッチ数である時に true を返し，
-  フィボナッチ数ではない時には false を返す仕様とした．
-</p>
-<p>
-  2.に関しては，整数Nが与えられた時，0番目からN番目までのフィボナッチ数列を配列として返す仕様とした．
-</p>
-<p>3.に関しては……</p>
+GUIで推論過程を表示するにあたって、GUIのポインタを他のクラスに渡すという手法をとった。
 
 <h3>プログラムの構造</h3>
 <!--  どのような設計をしたか．-->
@@ -247,39 +235,173 @@ public String writeBuffer(ArrayList< String > data) {
 }
 </pre>
 ファイルから読み込んだ文字列は1行ずつリストに格納しているため、それをString型のbufferにまとめるのがこのメソッドである。4行〜7行目にかけて、1行ずつを改行で繋げている。<br><br>
+次にinitBuffer()メソッドについて説明する。
 <pre class="brush: java">
+public void initBuffer() {
+   proBuffer = "";
+   outBuffer = "";
+   proTextArea.setText("");
+   outTextArea.setText("");
+}
 </pre>
+推論過程と質問の答えのテキストエリアを空にする。<bR><Br>
+次にrunForwardChain()メソッドについて説明する。
 <pre class="brush: java">
+public void runForwardChain(String assertionFileName, String ruleFileName){
+   ForwardRuleBase rb = new ForwardRuleBase(assertionFileName,ruleFileName, this);
+   rb.forwardChain();
+   outBuffer = Unify.Search(rb.wm.assertions, qBuffer.split("\n")).toString();
+   outTextArea.setText(outBuffer);
+}
 </pre>
+教科書の前向き推論のプログラムのmain関数の内容とほぼ同じとなっている。<br
+GUIから呼び出す用に新たにコンストラクタを追加したため、2行目のコンストラクタの引数は課題6-2までのものとは異なっている。<br>
+3行目のUnify.Searchは過去のパターンマッチングの課題で作成したものを用いた。<br><br>
+次にrunBackwardChain()メソッドについて説明する。
 <pre class="brush: java">
+public void runBackwardChain(String assertionFileName, String ruleFileName){
+   BackwardRuleBase rb;
+   FileManager fm;
+   fm = new FileManager();
+   ArrayList< BackwardRule > rules = fm.loadRules(ruleFileName);
+   ArrayList< String > wm = fm.loadWm(assertionFileName);
+   rb = new BackwardRuleBase(rules, wm, this);
+   StringTokenizer st = new StringTokenizer(qBuffer, "\n");
+   ArrayList< String > queries = new ArrayList< String >();
+   for (int i = 0; i < st.countTokens();) {
+      queries.add(st.nextToken());
+   }
+   rb.backwardChain(queries);
+}
 </pre>
+後ろ向き推論についても、教科書のmain関数とほぼ同じである。7行目のコンストラクタも、前向き推論と同様にGUIから呼び出す用に新たなコンストラクタを追加した。<br><br>
+次に、追加したコンストラクタについて説明する。<br>
+まず前向き推論について
 <pre class="brush: java">
-</pre>
-<pre class="brush: java">
-</pre>
-<pre class="brush: java">
-</pre>
-<pre class="brush: java">
-</pre>
+RuleBaseFrame rbf;
+boolean flag;
 
+ForwardRuleBase(String assertionFileName, String ruleFileName, RuleBaseFrame rbf){
+   fileName = ruleFileName;
+   wm = new WorkingMemory();
+   flag = true;
+   this.rbf = rbf;
 
+   ArrayList< String > assertion = FileLoading.fileLoading(assertionFileName);
+   for(int i=0; i < assertion.size(); i++){
+      wm.addAssertion(assertion.get(i),rbf,flag);
+   }
+		
+   rules = new ArrayList< ForwardRule >();
+   loadRules(fileName);
+ }
+</pre>
+フィールドにGUIの変数と、boolean型変数のflagを追加した。flagは、GUIから前向き推論を行ったのか、ForwardChain.javaから前向き推論を行ったのかを区別するために用いる。<br>
+コンストラクタは、引数としてアサーションファイルのファイル名、ルールファイルのファイル名、GUIのポインタを受け取る。<br><br>
+次に後ろ向き推論について
+<pre class="brush: java">
+RuleBaseFrame rbf;
+boolean flag;
+
+BackwardRuleBase(ArrayList< BackwardRule > theRules,ArrayList< String > theWm, RuleBaseFrame rbf){
+   wm = theWm;
+   rules = theRules;
+   this.rbf = rbf;
+   flag = true;
+}
+</pre>
+後ろ向き推論のコンストラクタについても、前向き推論と同様である。<br><br>
+また、GUIの推論過程を表示するテキストエリアや質問の答えを表示するテキストエリアに文字列を表示するために新たにメソッドを追加したため、それについて説明する。<br>
+追加はForwardChain.javaとBackwardChain.javaにした。
+<pre class="brush: java">
+public void writeProBuffer(String s){
+   if(flag){
+      rbf.setProBuffer(rbf.getProBuffer()+s+"\n");
+      rbf.proTextArea.setText(rbf.getProBuffer());
+   }
+}
+    
+public void writeOutBuffer(String s){
+   if(flag){
+      rbf.setOutBuffer(rbf.getOutBuffer()+s+"\n");
+      rbf.outTextArea.setText(rbf.getOutBuffer());
+   }
+}
+</pre>
+writeProBufferとwriteOutBufferのProおよびOutは過程(process)と出力(out)を表す。引数としてString型の文字列を受け取り、それをテキストエリアに追加する処理を行う。<br>
+flagは、GUIからこのメソッドを呼び出した場合はtrueとなっており、その他から呼び出した場合はfalseになっているため、GUI以外から呼び出した場合はこの処理は行われない。
 <h3>実行例</h3>
 <!-- 実行例を示す．PNGやGIF等の絵を張っても良い．-->
 <p>
-  calcFibo() メソッドの戻り値を標準出力に出力した結果を下図に示す．
+GUIの実行例を以下に示す。
 </p>
 
 <!-- 画像ファイルを貼る場合は <img> タグを使う -->
-<img src="./hoge/image.png"/>
+<img src="1.png"/>
+<img src="2.png"/>
 
-<p>
-  今回は0, 1番目のフィボナッチ数を1としたため，図で表したように calcFibo() の引数に5を与えた時は8となるのが正しい動作である．……
-</p>
-
-<h2>課題1-2</h2>
+<h2>発展課題6-5</h2>
 <!-- 以下，上記と同様 -->
-(以下同様)
+上記6-3で実装したGUIを発展させ，質問応答だけでなく，ルールの編集（追加，削除，変更）などについてもGUIで行えるようにせよ． 
+<h3>独自仕様の説明</h3>
+ルールだけでなく、アサーションも編集できるようにした。
+<h3>プログラムの構造</h3>
+GUIにアサーションのファイルやルールのファイルの内容を表示するテキストエリアを配置し、さらにSaveのボタンを追加した。
+<h3>実装の説明</h3>
+テキストエリアについては配置するだけなので説明は省略する。<br>
+必須課題6-3でも書いたが、Saveボタンについて説明する。<br>
+以下はSaveボタンが押されたときの処理を記述した部分である。
+<pre class="brush: java">
+public void actionPerformed(ActionEvent event) {
+   JButton button = (JButton) event.getSource();
 
+   if (isClear()) {// ファイル名が書かれていなかったら
+      initBuffer();// バッファ初期化
+      outBuffer = "Error:Input Filename";
+      outTextArea.setText(outBuffer);
+      return;
+   }
+
+   // ファイル読み込み
+   String assertionFileName = assertionFileTextArea.getText();
+   String ruleFileName = ruleFileTextArea.getText();
+   ArrayList< String > assertion = FileLoading.fileLoading(assertionFileName);
+   ArrayList< String > rule = FileLoading.fileLoading(ruleFileName);
+
+   // ファイルが見つからなかったら
+   if (assertion.get(0).equals("error") || rule.get(0).equals("error")) {
+      initBuffer();// バッファ初期化
+      assertionTextArea.setText(writeBuffer(assertion));
+      ruleTextArea.setText(writeBuffer(rule));
+      return;
+   }
+
+               /*---   中略   ---*/
+
+   } else if (button == save) {// Saveが押されたら
+      try {
+         FileWriter assertionFw = new FileWriter(assertionFileName);
+         FileWriter ruleFw = new FileWriter(ruleFileName);
+
+         assertionFw.write(assertionTextArea.getText());
+         assertionFw.close();
+         ruleFw.write(ruleTextArea.getText());
+         ruleFw.close();
+
+         outBuffer = "Saved";
+         outTextArea.setText(outBuffer);
+
+      } catch (IOException e) {
+         System.out.println(e);
+   }
+}
+</pre>
+2〜23行目の処理は必須課題6-3と同様である。<br>
+32行目、34行目でそれぞれアサーションの内容を表示するテキストエリアとルールの内容を表示するテキストエリアの文字列を取得し、ファイルに書き込む。<br>
+書き込みを終えたら出力のテキストエリアに"Saved"と表示する。
+<h3>実行例</h3>
+Saveを押したときの実行例を以下に示す。<br>
+<img src="3.png"/>
 <h2>考察</h2>
 <!--
  考察を書く．PNGやGIF等の絵を張っても良い．
@@ -287,9 +409,13 @@ public String writeBuffer(ArrayList< String > data) {
  例: 今回はできなかったが，更に〜の機能を追加すべきである．なぜなら，...
 -->
 <p>
-  今回，フィボナッチ数をもとめるためのクラス Fibonacci を実装し，インスタンスメソッドとして機能を実装したが，
-  これは静的クラス，または，シングルトンとして実装した方が適していたように考えられる．
-  なぜなら……
+必須課題6-3について、最初は推論過程の表示は全ての推論が終わったあとにコンソールに表示されてるものをGUIに渡すという方法を考えていたが、それだとリアルタイムの過程ではないので、コンソールに文字列が追加されるたびにそれをGUIに渡すという方法をとった。そこで、GUIのあるファイルと推論を行うファイルが別であるため、GUIのポインタを推論を行うファイルに渡すという手法をとった。これによって、推論を行うファイルからでも自由にGUIにアクセスすることが可能となった。
+</p>
+<p>
+今回追加出来なかった機能として、推論過程を画像で出力する機能がある。必須課題6-3の実行例のような推論過程では、どの事実からどの事実が生成されたというのは非常にわかりにくい。グラフを用いて、推論過程が見てすぐにわかるようにするべきであった。
+</p>
+<p>
+発展課題6-5について、この機能の欠点は誤って保存してしまった場合に元に戻れないことである。もしテキストエリアが、Loadする前で空欄のままなのに、誤ってSaveボタンを押してしまうと、アサーションファイルおよびルールファイルの中身も空欄となってしまう。それを防ぐ機能として、Saveボタンを押したときに確認のポップアップを表示したり、一つ前の状態に戻るボタンを追加するべきであった。
 </p>
 
 
@@ -300,18 +426,9 @@ public String writeBuffer(ArrayList< String > data) {
 <!-- 感想を書く．-->
 <!-- 例: 〜が面白かった，〜がわからなかった，〜を作ってみたい，講義・演習に関する要望，など．-->
 <p>
-  フィボナッチ数の一般項をもとめるのに夢中であやうく実装が間に合わなくなるところだった．
-  実装に関しては……
+今回の課題はグループでやるべきものなのかと疑問に思った。また、誰がどれを実装して〜というものを決めたり、グループ内で連携をとるのは難しいなと思った。<br>
+あとGitHubをある程度は使えるようになりたいと思った。
 </p>
-
-
-<h2>参考文献</h2>
-<!-- 参考文献を書く．助けてもらった人がいれば，それも書く-->
-
-<ul>
-  <li>2XXXXXXX 東工太郎君</li>
-  <li>名大次郎 著（19XX）『Java プログラミング』オレイリー社</li>
-</ul>
 
 </body>
 </html>
