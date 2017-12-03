@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+
+  <!--
+   デフォルトのスタイル
+   より見やすく変更しても良い
+  -->
+  <link rel="stylesheet" href="default.css"/>
+
+  <!--
+    SyntaxHighlighter 3.0.83 (http://alexgorbatchev.com/SyntaxHighlighter/)
+    Java のコードを読みやすくする
+  -->
+  <link rel="stylesheet" href="shCore.css"/>
+  <link rel="stylesheet" href="shThemeDjango.css"/>
+  <script src="shCore.js"></script>
+  <script src="shBrushJava.js"></script>
+  <script>SyntaxHighlighter.all();</script>
+
+  <!--
+    目次を動的に生成する
+  -->
+  <script src="outliner.js"></script>
+  <script>
+    window.addEventListener('load', function() {
+      // 第一引数: アウトライン対象の要素のセレクタ，第二引数: アウトラインを格納する要素のセレクタ．
+      new TOutliner('h2', '#outline');
+    });
+  </script>
+
+  <title>知能プログラミング演習II レポート</title>
+</head>
+
+<body>
+<header>
+  <!-- グループ番号・学籍番号・名前を書く．-->
+  <h1>グループ4 2715064 佐藤嵩晟</h1>
+
+  <!-- 目次生成用 -->
+  <nav id="outline"></nav>
+</header>
+
+<h2>グループ</h2>
+グループ作成書類: <a href="../GrepX/index.html">GrepX</a><br>
+メンバーと役割分担: 
+<ul>
+<li>名工大輔 26115000: 課題X-1 考察担当，課題X-4 GUI実装担当
+<li><a href="../../../../ckb15999/workspace/kprep/repX/index.html">名工太郎 24115999</a>: 課題X-1 実装担当，課題X-2 考察担当，グループ作成書類担当
+</ul>
+
+<h2>ソースファイル</h2>
+<ul>
+  <li><a href="../../RuleBaseSystem/src/RuleBaseSystem.java">RuleBaseSystem.java</a>
+  <li><a href="../../RuleBaseSystem/src/ForwardChain.java">ForwardChain.java</a>
+  <li><a href="../../RuleBaseSystem/src/BackwardChain.java">BackwardChain.java</a>
+  <li><a href="../../RuleBaseSystem/src/Unify.java">Unify.java</a>
+  <li><a href="../../RuleBaseSystem/src/FileLoading.java">FileLoading.java</a>
+
+    <!-- 実装・変更したソースファイルへのリンク．修正する． -->
+    <!-- ※ リンクは絶対パスに変更せず，上記のような相対パスのままで！ -->
+</ul>
+
+<hr>
+
+<h2>課題6-3</h2>
+<!-- 課題を書く．-->
+上記6-2で実装した質問応答システムのGUIを作成せよ．<br>
+質問に答える際の推論過程を可視化できることが望ましい．
+
+<h3>独自仕様の説明</h3>
+<!--
+ もし自分で独自に決めた仕様があれば，その説明を書く．
+-->
+<p>課題に加えて，以下の三点を独自仕様として組み込んだ．</p>
+
+<ol>
+  <li>与えられた数がフィボナッチ数かどうかを判定する</li>
+  <li>N番目のフィボナッチ数だけではなく，N番目までのフィボナッチ数列を返す</li>
+  <li>フィボナッチ数の一般項を用いてN番目のフィボナッチ数を求める</li>
+</ol>
+
+<p>
+  1.に関して，ユーザーから数字が与えられた時，それがフィボナッチ数である時に true を返し，
+  フィボナッチ数ではない時には false を返す仕様とした．
+</p>
+<p>
+  2.に関しては，整数Nが与えられた時，0番目からN番目までのフィボナッチ数列を配列として返す仕様とした．
+</p>
+<p>3.に関しては……</p>
+
+<h3>プログラムの構造</h3>
+<!--  どのような設計をしたか．-->
+<p>
+  実装したGUIは単一のクラス RuleBaseFrame で構成されている．<br>
+  Fibonacci クラスはインスタンスメソッドとして，actionPerformed(), isClear(), getOutBuffer(), setOutBuffer(),getProBuffer(),setProBuffer(),writeBuffer(),initBuffer(),runForwardChain(),runBackwardChain() を持つ．<br>
+  actionPerformed() メソッドはボタンが押されたときの処理を定義する。<br>
+  isClear() メソッドはファイル名の入力欄が空のときにtrue,入力されているときにfalseを返す。<br>
+getOutBuffer(),getProBuffer()メソッドは、それぞれ質問の答えを表示するテキストエリアの文字列を取得するメソッドと、推論過程を表示するテキストエリアの文字列を取得するメソッドである。Outは出力、Proは過程(process)を表す。<br>
+setOutBuffer(),setProBuffer()メソッドは、それぞれのテキストエリアに表示する文字列を格納するメソッドである。<br>
+これらのアクセッサは他のjavaファイルでGUIにアクセスするときに用いる。<br>
+writeBuffer()メソッドは、データファイルから取得した文字列のリストを、一つのString型の変数にまとめて格納する。<br>
+initBuffer()メソッドは、過程を表示するテキストエリアと質問の答えを表示するテキストエリアのバッファを初期化する。<br>
+runForwardChain(),runBackwardChain()は引数としてアサーションのファイル名とルールのファイル名を受け取り、前向き推論および後ろ向き推論を行う。<br>
+</p>
+
+
+<h3>実装の説明</h3>
+<!--
+ どう実装したか，ソースコードを詳細に説明する．
+ 特に重要な箇所はレポートにペーストして説明する．
+-->
+<p>
+  実装したプログラムに関して,先に挙げたメソッドの説明を行う．
+</p>
+
+<p>
+  まずactionPerformed()メソッドについて
+</p>
+
+<!--
+  ソースコードをはりつける時は <pre> タグを使う
+  class="brush: java" でシンタックスハイライトする
+  重要な部分のみを貼り付ければ良い
+-->
+<pre class="brush: java">
+public void actionPerformed(ActionEvent event) {
+   JButton button = (JButton) event.getSource();
+
+   if (isClear()) {// ファイル名が書かれていなかったら
+      initBuffer();// バッファ初期化
+      outBuffer = "Error:Input Filename";
+      outTextArea.setText(outBuffer);
+      return;
+   }
+
+   // ファイル読み込み
+   String assertionFileName = assertionFileTextArea.getText();
+   String ruleFileName = ruleFileTextArea.getText();
+   ArrayList< String > assertion = FileLoading.fileLoading(assertionFileName);
+   ArrayList< String > rule = FileLoading.fileLoading(ruleFileName);
+
+   // ファイルが見つからなかったら
+   if (assertion.get(0).equals("error") || rule.get(0).equals("error")) {
+      initBuffer();// バッファ初期化
+      assertionFileTextArea.setText(writeBuffer(assertion));
+      assertionFileTextArea.setText(writeBuffer(rule));
+      return;
+   }
+
+   if (button == run) {// Runが押されたら
+
+      qBuffer = qTextArea.getText();
+
+      // 質問が書かれていなかったら
+      if (qBuffer.equals("")) {
+         initBuffer();// バッファ初期化
+         outBuffer = "Error:Input Question";
+         outTextArea.setText(outBuffer);
+         return;
+      }
+
+      if (ftoggle.isSelected()) {// 前向き推論
+         runForwardChain(assertionFileName,ruleFileName);
+      } else {// 後ろ向き推論
+         runBackwardChain(assertionFileName,ruleFileName);
+      }
+
+   } else if (button == load) {// Loadが押されたら
+      // バッファの初期化
+      initBuffer();
+
+      assertionTextArea.setText(writeBuffer(assertion));
+      ruleTextArea.setText(writeBuffer(rule));
+
+   } else if (button == save) {// Saveが押されたら
+      try {
+         FileWriter assertionFw = new FileWriter(assertionFileName);
+         FileWriter ruleFw = new FileWriter(ruleFileName);
+
+         assertionFw.write(assertionTextArea.getText());
+         assertionFw.close();
+         ruleFw.write(ruleTextArea.getText());
+         ruleFw.close();
+
+         outBuffer = "Saved";
+         outTextArea.setText(outBuffer);
+
+      } catch (IOException e) {
+         System.out.println(e);
+      }
+   }
+}
+</pre>
+ボタンはLoad,Run,Saveの3つがあるが、これら3つの共通の処理として行うのが4〜23行目の部分である。<br>
+まず、4〜9行目でファイル名が入力されているかどうかの確認をする。ファイル名はアサーションファイルとルールファイルの2つがあるが、少なくとも一方が入力されていない場合はreturnをする。<br>
+2つともファイル名が入力されていれば、次に12〜15行目にかけてファイルの読み込みを行う。テキストエリアからファイル名を取得し、FileLoading.javaのfileLoadingメソッドを用いて、ファイルの文字列を1行ずつ格納したリストを得る。<br>
+次に18行目〜23行目にかけて無事読み込みができたかを確認する。読み込みができなかった場合、リストの先頭にerrorという文字列が入るようにしたため、それを用いて判定している。<br>
+そして押されたボタンに対応する処理を行う。<br>
+Runが押された場合の処理は25〜41行目である。まず質問文を取得する。質問文が入力されてない場合はエラー文を表示しreturnする。<br>
+質問文を取得できたら前向き推論および後ろ向き推論を行う。<br>
+Loadが押された場合の処理は43〜48行目である。まずバッファを初期化し、最初にファイルから取得した文字列のリストをString型に変換してテキストエリアに表示する。<br>
+Saveが押された場合の処理は50〜66行目である。テキストエリアの文字列を取得し、入力されたファイルにそれを書き込む。<br><br>
+次にisClear()メソッドについて説明する。
+<pre class="brush: java">
+public boolean isClear() {
+   //ファイル名が入力されていなかったら
+   if (assertionFileTextArea.getText().equals("") || ruleFileTextArea.getText().equals("")) {
+      return true;
+   } else {
+      return false;
+   }
+}
+</pre>
+ファイル名の入力欄はアサーションファイルのファイル名とルールファイルのファイル名の2つがあるが、少なくとも一方が入力されていなければfalseを返し、2つとも入力されていればfalseを返す。<br><br>
+次にアクセッサについて説明する。
+<pre class="brush: java">
+public String getOutBuffer() {
+   return outBuffer;
+}
+
+public void setOutBuffer(String s) {
+   outBuffer = s;
+}
+
+public String getProBuffer() {
+   return proBuffer;
+}
+
+public void setProBuffer(String s) {
+   proBuffer = s;
+}
+</pre>
+これらのアクセッサは他のjavaファイルでGUIにアクセスするときに用いる。<br><br>
+次にwriteBuffer()メソッドについて説明する。
+<pre class="brush: java">
+public String writeBuffer(ArrayList< String > data) {
+   String buffer = "";
+
+   for (int i = 0; i < data.size(); i++) {
+      buffer += data.get(i);
+      buffer += "\n";
+   }
+
+   return buffer;
+}
+</pre>
+ファイルから読み込んだ文字列は1行ずつリストに格納しているため、それをString型のbufferにまとめるのがこのメソッドである。4行〜7行目にかけて、1行ずつを改行で繋げている。<br><br>
+<pre class="brush: java">
+</pre>
+<pre class="brush: java">
+</pre>
+<pre class="brush: java">
+</pre>
+<pre class="brush: java">
+</pre>
+<pre class="brush: java">
+</pre>
+<pre class="brush: java">
+</pre>
+<pre class="brush: java">
+</pre>
+
+
+<h3>実行例</h3>
+<!-- 実行例を示す．PNGやGIF等の絵を張っても良い．-->
+<p>
+  calcFibo() メソッドの戻り値を標準出力に出力した結果を下図に示す．
+</p>
+
+<!-- 画像ファイルを貼る場合は <img> タグを使う -->
+<img src="./hoge/image.png"/>
+
+<p>
+  今回は0, 1番目のフィボナッチ数を1としたため，図で表したように calcFibo() の引数に5を与えた時は8となるのが正しい動作である．……
+</p>
+
+<h2>課題1-2</h2>
+<!-- 以下，上記と同様 -->
+(以下同様)
+
+<h2>考察</h2>
+<!--
+ 考察を書く．PNGやGIF等の絵を張っても良い．
+ 例: 自分で工夫して解決した点，その解決手法，なぜそうしたのか，その手法の素晴らしさ，上手くいかなかった点，なぜ上手くいかなかったのか，など．
+ 例: 今回はできなかったが，更に〜の機能を追加すべきである．なぜなら，...
+-->
+<p>
+  今回，フィボナッチ数をもとめるためのクラス Fibonacci を実装し，インスタンスメソッドとして機能を実装したが，
+  これは静的クラス，または，シングルトンとして実装した方が適していたように考えられる．
+  なぜなら……
+</p>
+
+
+<hr>
+
+
+<h2>感想</h2>
+<!-- 感想を書く．-->
+<!-- 例: 〜が面白かった，〜がわからなかった，〜を作ってみたい，講義・演習に関する要望，など．-->
+<p>
+  フィボナッチ数の一般項をもとめるのに夢中であやうく実装が間に合わなくなるところだった．
+  実装に関しては……
+</p>
+
+
+<h2>参考文献</h2>
+<!-- 参考文献を書く．助けてもらった人がいれば，それも書く-->
+
+<ul>
+  <li>2XXXXXXX 東工太郎君</li>
+  <li>名大次郎 著（19XX）『Java プログラミング』オレイリー社</li>
+</ul>
+
+</body>
+</html>
