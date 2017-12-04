@@ -36,7 +36,7 @@
 <body>
 <header>
   <!-- グループ番号・学籍番号・名前を書く．-->
-  <h1>グループ4</h1>
+  <h1>グループ4 27115085 瀬戸口大貴</h1>
 
   <!-- 目次生成用 -->
   <nav id="outline"></nav>
@@ -112,25 +112,48 @@ BackwardChainでは質問文に対してアサーションとルールから後�
 <li>ForwardChainについて</li>
 <p>講義資料の前向き推論のプログラム(RuleBaseSystem.java)をForwardChain.javaとした．
 この時に後のBackwardChainと同クラス名の衝突を防ぐ為に以下のようにクラス名の変更等を行った．</p>
-<pre class="brush: java">
 
+<pre class="brush: java">
+public class ForwardChain {
+    static ForwardRuleBase rb;
+    public static void main(String args[]){
+        rb = new ForwardRuleBase();
+        rb.forwardChain();
+        System.out.println(Unify.Search(rb.wm.assertions, args));
+    }
+}
 </pre>
+
 <p>また，途中出力されていた文章をGUIで出力させたかったので以下のようなメソッドを追加し，コンソールに出力されると同時にGUIにも出力されるようにした．</p>
-<pre class="brush: java">
 
+<pre class="brush: java">
+public void writeProBuffer(String s, RuleBaseFrame rbf){
+    rbf.setProBuffer(rbf.getProBuffer()+s+"\n");
+    rbf.proTextArea.setText(rbf.getProBuffer());
+}
 </pre>
+
 <p>講義資料の内容と基本的には変わらないが，出力する際に以下のようにUnify.Search()を使うことでマッチングを行う．</p>
-<pre class="brush: java">
 
+<pre class="brush: java">
+System.out.println(Unify.Search(rb.wm.assertions, args));
 </pre>
+
 <p>このUnifyクラスは課題4で作成したマッチングを行い，対応する変数の組を出力するプログラムである．</p>
 <br>
 <li>BackwardChainについて</li>
 <p>講義資料の後向き推論のプログラム(RuleBaseSystem.java)をBackwardChain.javaとした．
 この時に後のForwardChainと同クラス名の衝突を防ぐ為に以下のようにクラス名の変更等を行った．</p>
-<pre class="brush: java">
 
+<pre class="brush: java">
+public class BackwardChain {
+    static BackwardRuleBase rb;
+    static FileManager fm;
+    public static void main(String args[]){
+	if(args.length != 1){
+                　⋮
 </pre>
+
 <p>また，途中出力されていた文章をGUIで出力させたかったのでForwardChainと同様にメソッドを追加し，GUIにも出力するようにした．</p>
 </ul>
 <p>ForwardChain，BackwardChain共に元々は文章が出力されるようになっていたので質問応答システムを作成するにあたって，
@@ -166,7 +189,10 @@ BackwardChainでは質問文に対してアサーションとルールから後�
 <h2>感想</h2>
 <!-- 感想を書く．-->
 <!-- 例: 〜が面白かった，〜がわからなかった，〜を作ってみたい，講義・演習に関する要望，など．-->
-
+<p>
+実際にプログラムを書く量は今までの課題に比べて少なかったと感じた．ただ，初めてのグループワークだったということもあり，課題の分担や進捗の確認などを行いながらだったので
+今までと違うベクトルで難しかった．特に自分ひとりでやっていたときと比べていちいち報告をしたりプログラムにメモを意図的に残したりすることが慣れなくて苦労した．
+</p>
 
 <!-- -------------------------------------------------------------------------------------------------- -->
 
