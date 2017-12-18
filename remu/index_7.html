@@ -143,7 +143,246 @@
     <li> 一段階前のオペレータに依存関係があり、比較する必要があるならば、変数束縛をチェックする </li>
   </ol>
   <br>
-  1.に関しては、
+  1.に関しては、そもそもこのバグの原因は、変数束縛の際に同じ段階の中で別の変数なのに同じ値が割り当て
+  られてないかのチェックをしていないのと、変数の割り当てに現在の状態のリストの先頭から条件に合うもの
+  から優先したものを使用しているという２つの仕様がうまいこと重なり合って起こっている。そのため、片方
+  を修正すればこのバグは取り除かれるので、今回は変数束縛時のチェックを行うように実装を変更した。<br>
+  <br>
+  具体的は、Unify::tokenMatchingとUnify::varMatchingを変更することで実現した。Unify::tokenMatching
+  では、片方が変数の場合に、今までの変数束縛の履歴をvarMatchingに渡すようにした。その際に呼ばれる
+  Unify::varMatchingは、元々のプログラムで定義していたものの引数を増やしたものを別で定義したものを使用
+  する。その内部では、変数束縛の履歴の中で同じ段階の変数束縛を探し、その時点で束縛しようとしている値が
+  別の変数にないかをチェックし、あればマッチングを失敗させるためにfalseを返している。以下がその部分の
+  ソースである。
+  <pre class="brush: java">
+      boolean varMatching(String vartoken, 
+                          String token, 
+                          Hashtable theBinding, 
+                          Integer[] matchPreviousResultCount) 
+      {
+        if (vars.containsKey(vartoken)) 
+        {
+          ... 
+        } 
+        else 
+        {
+          String uniqueNum = vartoken.replaceAll("[^0-9]", "");
+          for (Enumeration e = theBinding.keys(); e.hasMoreElements();) 
+          {
+            // 同じアサーション内の異なる変数で同じ値が割り当てられた際の処理
+            String key = (String) e.nextElement();
+            String value = (String) theBinding.get(key);
+            if(key.contains(uniqueNum) && value.equals(token))
+            {
+              return false;
+            }
+            ...
+          }
+          
+          ...
+        }
+        return true;
+      }
+  </pre>
+  <br>
+  次に、2.に関して、これはPlanner::alignGoalListを実装することで実現している。<br>
+  <br>
+  具体的には、引数に与えられたゴールリストの中から"- on -"の形のゴール状態をとり、さらに"-"の部分を
+  抽出する。その後、抽出したオブジェクトが上から並ぶようにリストに格納し、都合のいいようにゴールリスト
+  を再構成したリストを返す。ちなみに、"- on -"の形でないゴール状態はそのまま返すリストの先頭から格納
+  しておく。以下はPlanner::alignGoalListの部分のソースである。
+  <pre class="brush: java">
+      private Vector alignGoalList(Vector goalList)
+      {
+        Vector newGoalList = new Vector();
+        ArrayList&lt;String&gt; allObjects = new ArrayList&lt;String&gt;();
+    
+        for(int index = 0; index < goalList.size(); ++index)
+        {
+          ArrayList&lt;String&gt; objects = new ArrayList&lt;String&gt;();
+          boolean isOnState = false;
+          StringTokenizer tokenizer = new StringTokenizer((String)goalList.get(index));
+          String firstObject = "";
+
+          while(tokenizer.hasMoreTokens())
+          {
+            String token = tokenizer.nextToken();
+            if(!token.equals("on"))
+            {
+              objects.add(token);
+              if(firstObject.equals(""))
+                firstObject = token;
+            }
+            else
+            {
+              isOnState = true;
+            }
+          }
+    
+          int insertIndex = allObjects.size();
+    
+          if(allObjects.contains(firstObject))
+          {
+            insertIndex = allObjects.indexOf(firstObject);
+            allObjects.remove(insertIndex);
+          }
+          if(isOnState)
+          {
+            allObjects.addAll(insertIndex, objects);
+          }
+          else
+          {
+            newGoalList.add((String)goalList.get(index));
+          }
+        }
+    
+        for(int index = allObjects.size() - 1; index > 0; --index)
+        {
+          String goal = allObjects.get(index - 1) + " on " + allObjects.get(index);
+          newGoalList.add(goal);
+        }
+    
+        return newGoalList;
+      }
+  </pre>
+  <br>
+  次に、3.に関して、各オペレータに対して依存関係のあるオペレータを事前知識としてリストで与えて置き、
+  一つ前の探索で用いたオペレータからそのリストを取得し、それらのオペレータの探索の優先順位を上げる処理
+  を行っている。ここでいう依存関係があるとは、今回の操作としては「拾う」ものと「置く」ものの二種類に
+  分けることができるので、それぞれのオペレータに対して逆の意味を持つものとの関係を指している<br>
+  <br>
+  具体的にはPlanner::planningAGoalにおいて、マッチングにおいてオペレータを選択する前に引数に与えられた
+  一つ前のマッチングで使用した依存関係のあるオペレータがnullでなかったときに、そのオペレータからリストを
+  取得して、優先度を上げる処理を行っている。また、一つ前のオペレータを与えるための処理もこの関数で行っており、
+  マッチングが成功した際に再帰的にPlanner::planningを呼ぶときに渡している。以下が、その２点の部分が書かれた
+  部分のソースである。
+  <pre class="brush: java">
+    private int planningAGoal(String theGoal,
+                              Vector theCurrentState,
+                              Hashtable theBinding,
+                              int cPoint,
+                              Operator nextOperator) 
+    {
+        ... 
+        
+        /* 対になるオペレータの優先順位を上げる */
+        if(nextOperator != null)
+        {
+          Vector pairs = nextOperator.GetPairedOperatorList();
+          for(int i = 0; i < pairs.size(); ++i)
+          {
+            Operator pair = (Operator) pairs.get(i);
+            operators.remove(pair);
+            // 先頭に持ってく
+            operators.add(0, pair);
+          }
+        }
+
+        for (int i = cPoint; i < operators.size(); i++) 
+        {
+          Operator targetOperator = (Operator) operators.elementAt(i);
+          Operator anOperator = rename(targetOperator);
+          
+          ...
+
+          for (int j = 0; j < addList.size(); j++) 
+          {
+            ... 
+
+            if ((new Unifier()).unify(theGoal,(String) addList.elementAt(j), theBinding, isRelatedNextOperator))
+            {
+              // 具体化し、あらたなゴールを生成
+              Operator newOperator = anOperator.instantiate(theBinding);
+              Vector newGoals = (Vector) newOperator.getIfList();
+              //System.out.println(newOperator.name);
+
+              // 再帰呼び出し
+              if (planning(newGoals, theCurrentState, theBinding, targetOperator)) 
+              {
+                ... 
+              } 
+              else 
+              {
+                ... 
+              }
+              plan.removeAllElements();
+              for (int k = 0; k < orgPlan.size(); k++) {
+                plan.addElement(orgPlan.elementAt(k));
+              }
+            }
+          }
+        }
+      }
+      return -1;
+    }
+  </pre>
+  <br>
+  最後に、4.について、依存関係については3.のときと同じであるが、それに比較する必要があるとはどういうことかというと、
+  最終的な目的状態は通常オブジェクトはつかまれている状態を含んでいるため、最後に行われる操作は置く操作であると考えら
+  れる。そのため、無駄な操作を繰り返すような推論をしそうなのは拾う系の操作であるため、それらが比較が必要であるオペレ
+  ータであるということになる。<br>
+  <br>
+  具体的な実装としては、Unify::unityTokenを変更することで実現させている。比較が必要とするオペレータを探索している
+  場合に、変数の数と一つ前の段階の変数割り当てとかぶっている数をそれぞれカウントし、それらが一致した場合にマッチングを
+  失敗させるためにfalseを返させている。以下がその部分のソースである。
+  <pre class="brush: java">
+      public boolean unifyToken(String string1, String string2, Hashtable theBindings, boolean isRelatedNextOperator) 
+      {
+        ...
+    
+        Integer varTokenCount[] = {0};
+        Integer matchPreviousResultCount[] = {0};
+    
+        for (int i = 0; i < length; i++) {
+          if (!tokenMatching(buffer1[i], buffer2[i], theBindings, varTokenCount, matchPreviousResultCount)) {
+            return false;
+          }
+        }
+    
+        if(isRelatedNextOperator && varTokenCount == matchPreviousResultCount){
+          return false;
+        }
+    
+        return true;
+      }
+  </pre>
+  実際のカウントについてはUnify::tokenMatching内部で行っているのだが、割と単純な構造をしているので、説明は割愛する。
+
+  <h3> 実行例 </h3>
+  まず、元のプログラムにおいて、検証したオペレータの数と最終結果をそれぞれ出力した結果を以下に示す。<br>
+  <br>
+  <pre>
+      Step: 25
+      ***** This is a plan! *****
+      pick up B from the table
+      Place B on A
+      remove B from on top A
+      Place B on C
+      pick up A from the table
+      Place A on A
+      remove A from on top A
+      Place A on A
+      remove A from on top A
+      Place A on A
+      remove A from on top A
+      Place A on B
+  </pre>
+  次に、今回作成したプログラムにおいて、同様の出力をした結果を以下に示す。<br>
+  <br>
+  <pre>
+      Step: 8
+      ***** This is a plan! *****
+      pick up B from the table
+      Place B on C
+      pick up A from the table
+      Place A on B
+  </pre>
+  元のプログラムに関しては何回か試してみたが、オペレータの決め方に乱数を採用しているため、今回の
+  プログラムに比べて検証した数が少なくなることはあっても最適な解を出している場合はかなり少なかった。
+  逆に、今回作成したプログラムは検証する回数もそこそこ少なく、最適な解を出すことができている。<br>
+  <br>
+  よって、ある程度の改良をすることはできたといえるだろう。<br>
+  <br>
 <!-- -------------------------------------------------------------------------------------------------- -->
 <h2>考察</h2>
 <!--
@@ -151,7 +390,22 @@
  例: 自分で工夫して解決した点，その解決手法，なぜそうしたのか，その手法の素晴らしさ，上手くいかなかった点，なぜ上手くいかなかったのか，など．
  例: 今回はできなかったが，更に〜の機能を追加すべきである．なぜなら，...
 -->
-
+まず、バグの修正方法について、なぜ変数割り当ての優先度を変えなかったのかというと、変数の割り当てに関しては
+ほかの動作と共通した処理をさせる必要があったのと、変数束縛が良くないかは変数束縛をしてから判断したほうが
+優先度をいじってどうにかするよりも汎用性が高いと判断したためである。<br>
+<br>
+次に、ゴール状態の編集について、これはプログラムの仕様上、上の状態から探索させようとすると正常な状態に落ち
+着かなかったり、無限ループに陥る場合があったため、必要な実装であった。だが、考察中に気付いたのだが、今の状
+態だとオブジェクトが４つ以上で２つ以上のグループに分かれると正常な処理ができない。"- on -"の状態ならなんで
+も関係なくリストに格納して、後ろから順にゴール状態を再生成してしまうために、実際とは違うゴール状態を生み出し
+てしまう。今回の課題の実装の上では問題ないが、次の課題でブラッシュアップすることができるなら、修正を加える
+必要があるだろう。<br>
+<br>
+最後に、依存関係があるオペレータの操作について、実行例にも示した通りある程度、最適な解をだしつつ少ない手数で
+探索することができている。だが、現状のままだと初期状態でオブジェクトが積まれている状態だと、ほぼほぼ無限ループ
+に陥ってしまう。GUIが元々の状態にしか対応していないそうなので、今回は修正を見送っても課題を満たすには十分だった
+のだが、先ほどの事例と同様に、次の課題で直せるなら直したほうがいいだろう。<br>
+<br>
 
 <hr>
 
@@ -159,7 +413,10 @@
 <h2>感想</h2>
 <!-- 感想を書く．-->
 <!-- 例: 〜が面白かった，〜がわからなかった，〜を作ってみたい，講義・演習に関する要望，など．-->
-
+今回の課題については、プログラムが元々複雑であったために、解読をするのに一番時間がかかったといっても
+過言ではない。プログラムを読み進めていくうちにある程度このような実装になるのも納得がいく部分もあった
+ものの、コメントアウトをつけておいてほしかった部分ではついていなかったのに、割かしわかりやすいような
+部分にはついているというあまり意味のないコメントアウトが多かったように感じた。
 
 </body>
 </html>
