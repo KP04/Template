@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+
+  <!--
+   デフォルトのスタイル
+   より見やすく変更しても良い
+  -->
+  <link rel="stylesheet" href="default.css"/>
+
+  <!--
+    SyntaxHighlighter 3.0.83 (http://alexgorbatchev.com/SyntaxHighlighter/)
+    Java のコードを読みやすくする
+  -->
+  <link rel="stylesheet" href="shCore.css"/>
+  <link rel="stylesheet" href="shThemeDjango.css"/>
+  <script src="shCore.js"></script>
+  <script src="shBrushJava.js"></script>
+  <script>SyntaxHighlighter.all();</script>
+
+  <!--
+    目次を動的に生成する
+  -->
+  <script src="outliner.js"></script>
+  <script>
+    window.addEventListener('load', function() {
+      // 第一引数: アウトライン対象の要素のセレクタ，第二引数: アウトラインを格納する要素のセレクタ．
+      new TOutliner('h2', '#outline');
+    });
+  </script>
+
+  <title>知能プログラミング演習II レポート</title>
+</head>
+
+<body>
+<header>
+  <!-- グループ番号・学籍番号・名前を書く．-->
+  <h1>グループ4 27115126 長谷川 達也</h1>
+
+  <!-- 目次生成用 -->
+  <nav id="outline"></nav>
+</header>
+
+<h2>グループ</h2>
+グループ作成書類: <a href="../Grep6/index.html">Grep6</a><br>
+メンバーと役割分担: 
+<ul>
+<li>佐藤 嵩晟 27115064: 課題6-3 GUI実装担当、課題6-5実装担当
+<li>塩谷 昂平 27115069: 課題6-1 考察担当
+<li>瀬戸口 大貴 27115085: 課題6-2 実装担当
+<li>長谷川 達也 27115126: 課題6-4 考察担当, グループ作成資料担当
+</ul>
+
+<h2>ソースファイル</h2>
+<ul>
+  <li><a href="../../RuleBaseSystem/src/RuleBaseSystem.java">RuleBaseSystem.java(GUI)</a>
+  <li><a href="../../RuleBaseSystem/src/ForwardChain.java">ForwardChain.java(前向き推論)</a>
+  <li><a href="../../RuleBaseSystem/src/BackwardChain.java">BackwardChain.java(後ろ向き推論)</a>
+  <li><a href="../../RuleBaseSystem/src/Unify.java">Unify.java(パターンマッチング)</a>
+  <li><a href="../../RuleBaseSystem/src/FileLoading.java">FileLoading.java(ファイル読み込み)</a>
+
+    <!-- 実装・変更したソースファイルへのリンク．修正する． -->
+    <!-- ※ リンクは絶対パスに変更せず，上記のような相対パスのままで！ -->
+</ul>
+
+<hr>
+
+<h2>課題6-4</h2>
+<!-- 課題を書く．-->
+グループでの進捗管理や成果物共有などについて，工夫した点や使ったツールについて，グループ作成書類で考察せよ．
+
+<h3>使用したツールについて</h3>
+
+  今回、グループで使用することにしたツールは以下の2つである。
+
+<ol>
+<li>Line</li>
+<li>GitHub</li>
+</ol>
+<br>
+  まず、Lineについて、これはグループ間の連絡用のツールとして使用する。本来ならファイルの送信などもやりやすいSlackなどを
+  導入するべきではあると思う。だが、私が部活でこれを使用し始めたころ、メンバーが慣れるまでに時間がかかりメッセージに気づ
+  かなかったり、返信が来ないなどの事態が発生したという経験がある。また、今回の演習は規模が小さいものであるため、そこまで
+  連絡用のツールにこだわる必要もないなと判断し、今回はLineを使用することにした。
+<br>
+<br>
+
+  次に、GitHubについて、本当は初心者でも扱いやすいGitをGUIで制御することができるSourceTreeも導入したかったのだが、作業
+  環境のメインがCSEであるので、今回はCLIで操作を各々行うことにした。管理の方法としては、私以外のメンバーにそれぞれブラン
+  チを作成してもらい、そこに各々の進捗状況を反映しつつ、私がmasterブランチに統合して、みんなで共有するという形を取った。
+  それぞれがmasterブランチに対して統合したほうが効率としてはいいのだが、まだ慣れないうちは変にデータを書き換えてしまう可
+  能性を否定はできないため、管理者は一人だけ立てる形を今回はとらせてもらった。
+<br>
+<br>
+<!-- -------------------------------------------------------------------------------------------------- -->
+<h2>考察</h2>
+<!--
+ 考察を書く．PNGやGIF等の絵を張っても良い．
+ 例: 自分で工夫して解決した点，その解決手法，なぜそうしたのか，その手法の素晴らしさ，上手くいかなかった点，なぜ上手くいかなかったのか，など．
+ 例: 今回はできなかったが，更に〜の機能を追加すべきである．なぜなら，...
+-->
+
+
+<hr>
+
+
+<h2>感想</h2>
+<!-- 感想を書く．-->
+<!-- 例: 〜が面白かった，〜がわからなかった，〜を作ってみたい，講義・演習に関する要望，など．-->
+
+
+</body>
+</html>
