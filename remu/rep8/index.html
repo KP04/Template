@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+
+  <!--
+   デフォルトのスタイル
+   より見やすく変更しても良い
+  -->
+  <link rel="stylesheet" href="default.css"/>
+
+  <!--
+    SyntaxHighlighter 3.0.83 (http://alexgorbatchev.com/SyntaxHighlighter/)
+    Java のコードを読みやすくする
+  -->
+  <link rel="stylesheet" href="shCore.css"/>
+  <link rel="stylesheet" href="shThemeDjango.css"/>
+  <script src="shCore.js"></script>
+  <script src="shBrushJava.js"></script>
+  <script>SyntaxHighlighter.all();</script>
+
+  <!--
+    目次を動的に生成する
+  -->
+  <script src="outliner.js"></script>
+  <script>
+    window.addEventListener('load', function() {
+      // 第一引数: アウトライン対象の要素のセレクタ，第二引数: アウトラインを格納する要素のセレクタ．
+      new TOutliner('h2', '#outline');
+    });
+  </script>
+
+  <title>知能プログラミング演習II レポート</title>
+</head>
+
+<body>
+<header>
+  <!-- グループ番号・学籍番号・名前を書く．-->
+  <h1>グループ4 27115126 長谷川達也</h1>
+
+  <!-- 目次生成用 -->
+  <nav id="outline"></nav>
+</header>
+
+<h2>グループ</h2>
+<ol>
+グループ作成書類: <a href="../Grep8/index.html">Grep8</a><br>
+メンバーと役割分担: 
+<ul>
+<li><a href="../../../../ckb15999/workspace/kprep/repX/index.html">佐藤 嵩晟 27115064</a>
+: GUI作成担当
+<li><a href="../../../../ckb15999/workspace/kprep/repX/index.html">塩谷 昂平 27115069</a>
+: スライド作成担当
+<li><a href="../../../../ckb15999/workspace/kprep/repX/index.html">長谷川 達也 27115126</a>
+: プランニング拡張担当
+<li><a href="../../../../ckb15999/workspace/kprep/repX/index.html">瀬戸口 大貴 27115085</a>
+: プランニング拡張担当
+</ul>
+</ol>
+
+<h2>ソースファイル</h2>
+<ul>
+  <li><a href="./Planing/src/Planner.java">Planner.java</a>
+    <!-- 実装・変更したソースファイルへのリンク．修正する． -->
+    <!-- ※ リンクは絶対パスに変更せず，上記のような相対パスのままで！ -->
+</ul>
+
+<hr>
+
+<!-- ------------------------------------------------------------------------------------------------------------------- -->
+
+<h2>課題8-1</h2>
+<!-- 課題を書く．-->
+<ol>
+グループで話し合ってどのプログラムを拡張するか決め，自由に拡張した上で，最終発表のデモシナリオを決めよ．<br>
+課題6, 7の発展課題を参考にして拡張しても良いし，全く新しい独自仕様を考案しても構わない．<br>
+</ol>
+
+
+<h3>プログラムの構造</h3>
+<!--  どのような設計をしたか．-->
+<ul>
+  今回の課題で使用したプログラムは、課題７で用いたものを競合戦略がさらに改善できるようにチューニングしたものである。
+　基本的なプログラムの流れ(再帰処理で実現している点)は変えなかったが、最善なオペレータが選ばれやすいような状況の設定
+が出来るようなプログラムになるように心がけて作成した。具体的には、<br><br>
+<ol>
+<li> ゴールリストはすべて満たしてから次のステップに行く </li>
+<li> その時点のゴール状態を満たすためのサブゴールの生成 </li>
+<li> ゴール状態に関係のある状態が先に来るように場の状態をソート </li>
+<li> ユーザが予想しているような最終状況になるようにゴール状態を調整 </li>
+<li> 前後のオペレータを比較して、無駄な操作をなくす </li>
+</ol><br>
+といったことを実装した。
+</ul>
+<br>
+
+<h3>実装の説明</h3>
+<!--
+ どう実装したか，ソースコードを詳細に説明する．
+ 特に重要な箇所はレポートにペーストして説明する．
+-->
+<p>
+  実装したプログラムに関して，競合戦略解消のために行ったそれぞれの項目について説明をしていく。
+</p>
+
+<p>
+  まず、1.について、
+</p>
+
+これは、ゴール状態が現在の状況にある場合、その数をステップごとにカウント(変数checkGoalCountsの該当箇所をインクリメント)し、そのステップにおけるゴールリストの要素数と同じになったらそのステップを終了させることで実現した。また、あるゴール状態をみたすためにプランニングを再帰的にプランニングを開始した場合、カウントをリセットし、毎回確認をさせることで確実に状況が満たされるようにしてある。以下の部分はその該当箇所である。<br><br>
+
+次に、2.について<br>
+これは各ゴール状態を調べるときに、Planner::makeSubGoal(String, Vector, Vector, ArrayList)に通すことで実現している。
+Planner::makeSubGoalは場の状況にゴール状態がないという仮定の下でサブゴールの自動的に生成し、それを第４引数のArrayListに順に格納している。具体的には、まずゴール状態の中では下にくるオブジェクトに対して"clear -"が存在しているかを確認し、ない場合はその状況においてそのオブジェクトの上に載っているオブジェクトに対して"ontable -"をサブゴールとして生成しリストの先頭に格納。さらにそのオブジェクトに対しても同様に状況の確認を行う。次にゴール状態の中では上に来るオブジェクトに対しても同様に処理を行う。リストに格納する要素がない場合はそのまま渡された第一引数を返し、見つかった場合はリストの先頭を返す。以下はPlanner::makeSubGoalのソースである。
+
+<!--
+  ソースコードをはりつける時は <pre> タグを使う
+  class="brush: java" でシンタックスハイライトする
+  重要な部分のみを貼り付ければ良い
+-->
+<pre class="brush: java">
+private String makeSubGoal(String theGoal, Vector goalList, Vector stateList, ArrayList<String> subGoalList)
+	{
+		//stateList内にはtheGoalはないと仮定
+		String goal = theGoal;
+		StringTokenizer tokens = new StringTokenizer(goal);
+		String firstObject = tokens.nextToken();
+		String lastObject;
+
+		if(firstObject.equals("ontable") || tokens.nextToken().equals("on"))
+		{
+			lastObject = tokens.nextToken();
+		}
+		else
+		{
+			return goal;
+		}
+
+		if(!stateList.contains("clear " + lastObject))
+		{
+			for(int i = 0; i < stateList.size(); ++i)
+			{
+				String state = (String)stateList.get(i);
+				if(state.indexOf("on " + lastObject) != -1)
+				{
+					StringTokenizer stateTokens = new StringTokenizer(state);
+					String obj = stateTokens.nextToken();
+					goal = "ontable " + obj;
+					lastObject = obj;
+					subGoalList.add(0, goal);
+					i = -1;
+				}
+			}
+		}
+
+		if(!firstObject.equals("ontable") && !stateList.contains("clear " + firstObject))
+		{
+			for(int i = 0; i < stateList.size(); ++i)
+			{
+				String state = (String)stateList.get(i);
+				if(state.indexOf("on " + firstObject) != -1)
+				{
+					StringTokenizer stateTokens = new StringTokenizer(state);
+					String obj = stateTokens.nextToken();
+					goal = "ontable " + obj;
+					firstObject = obj;
+					subGoalList.add(0, goal);
+					i = -1;
+				}
+			}
+		}
+
+		if(subGoalList.size() != 0)
+			return subGoalList.get(0);
+
+		return goal;
+	}
+</pre>
+
+また、ここで生成されたサブゴールは本来のゴールリストには格納せず、リスト内の要素分のプランニングを順次行ってから本来のゴールリストのプランニングに移るように設計している。
+
+
+<h3>実行例</h3>
+<!-- 実行例を示す．PNGやGIF等の絵を張っても良い．-->
+<ul>
+  <li> 初期状態:
+<ul>  
+{clear A, A on B, clear C, C on D, ontable B, ontable D, handEmpty}
+</ul>
+  <li> ゴール状態:
+<ul>
+{D on C, C on B, B on A}
+</ul>
+</ul>
+<br>
+<p>
+の下で実行した結果、以下のようなプランニングが行われた。<br><br>
+</p>
+<ul>
+<pre>
+remove A from on top B
+put A down on the table
+pick up B from the table
+Place B on A
+remove C from on top D
+put C down on the table
+pick up C from the table
+Place C on B
+pick up D from the table
+Place D on C
+</pre>
+</ul>
+
+<!-- ------------------------------------------------------------------------------------------------------------------- -->
+<h2>考察</h2>
+
+
+
+<!-- ------------------------------------------------------------------------------------------------------------------- -->
+
+<hr>
+
+
+<h2>感想</h2>
+<!-- 感想を書く．-->
+<!-- 例: 〜が面白かった，〜がわからなかった，〜を作ってみたい，講義・演習に関する要望，など．-->
+<p>
+  フィボナッチ数の一般項をもとめるのに夢中であやうく実装が間に合わなくなるところだった．
+  実装に関しては……
+</p>
+
+</body>
+</html>
