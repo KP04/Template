@@ -217,7 +217,9 @@ private String makeSubGoal(String theGoal, Vector goalList, Vector stateList, Ar
 	}
 </pre>
 
- 4.について、これらはPlanner::alignGoalList(Vector)で実装しており、受け取った引数の内部の状態を下の
+ 4.について、これらはPlanner::alignGoalList(Vector)で実装しており、
+ 受け取った引数の内部の状態を下のほうから順に並び、かつ関係性があるものはまとまって
+ 並ぶように
 
 <h3>実行例</h3>
 <!-- 実行例を示す．PNGやGIF等の絵を張っても良い．-->
