@@ -87,7 +87,7 @@
 <li> ゴールリストはすべて満たしてから次のステップに行く </li>
 <li> その時点のゴール状態を満たすためのサブゴールの生成 </li>
 <li> ゴール状態に関係のある状態が先に来るように場の状態をソート </li>
-<li> ユーザが予想しているような最終状況になるようにゴール状態を調整 </li>
+<li> ユーザが予想しているような最終状況になるようにゴール状態を調整、およびプランニングが最適にできるようにゴール状態を並び替え </li>
 <li> 前後のオペレータを比較して、無駄な操作をなくす </li>
 </ol><br>
 といったことを実装した。
@@ -104,12 +104,12 @@
 </p>
 
 <p>
-  まず、1.について、
+  1.について、
 </p>
 
 これは、ゴール状態が現在の状況にある場合、その数をステップごとにカウント(変数checkGoalCountsの該当箇所をインクリメント)し、そのステップにおけるゴールリストの要素数と同じになったらそのステップを終了させることで実現した。また、あるゴール状態をみたすためにプランニングを再帰的にプランニングを開始した場合、カウントをリセットし、毎回確認をさせることで確実に状況が満たされるようにしてある。以下の部分はその該当箇所である。<br><br>
 
-次に、2.について<br>
+2.について<br>
 これは各ゴール状態を調べるときに、Planner::makeSubGoal(String, Vector, Vector, ArrayList)に通すことで実現している。
 Planner::makeSubGoalは場の状況にゴール状態がないという仮定の下でサブゴールの自動的に生成し、それを第４引数のArrayListに順に格納している。具体的には、まずゴール状態の中では下にくるオブジェクトに対して"clear -"が存在しているかを確認し、ない場合はその状況においてそのオブジェクトの上に載っているオブジェクトに対して"ontable -"をサブゴールとして生成しリストの先頭に格納。さらにそのオブジェクトに対しても同様に状況の確認を行う。次にゴール状態の中では上に来るオブジェクトに対しても同様に処理を行う。リストに格納する要素がない場合はそのまま渡された第一引数を返し、見つかった場合はリストの先頭を返す。以下はPlanner::makeSubGoalのソースである。
 
@@ -178,7 +178,46 @@ private String makeSubGoal(String theGoal, Vector goalList, Vector stateList, Ar
 </pre>
 
 また、ここで生成されたサブゴールは本来のゴールリストには格納せず、リスト内の要素分のプランニングを順次行ってから本来のゴールリストのプランニングに移るように設計している。
+<br><br>
+3.について、これは単純にゴール状態に登場しているオブジェクトが使用されている場の状態をリストの前のほうに持っていく処理を行っている。
+実際の処理はPlanner::alignStateList(String, Vector)で行っている。以下は実際のコードである。
 
+<pre class="brush: java">
+	private Vector alignStateList(String goal, Vector stateList)
+	{
+		StringTokenizer tokens = new StringTokenizer(goal);
+		Vector priorityStateList = new Vector();
+
+		while(tokens.hasMoreTokens())
+		{
+			String token = tokens.nextToken();
+
+			if(!token.equals("on") && !tokens.equals("ontable"))
+			{
+				for(int index = 0, delete = 0; index - delete < stateList.size(); ++index)
+				{
+					String state = (String)stateList.get(index - delete);
+					StringTokenizer stateTokens = new StringTokenizer(state);
+					while(stateTokens.hasMoreTokens())
+					{
+						if(stateTokens.nextToken().equals(token))
+						{
+							stateList.remove(state);
+							priorityStateList.add(state);
+							++delete;
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		stateList.addAll(0, priorityStateList);
+		return stateList;
+	}
+</pre>
+
+ 4.について、これらはPlanner::alignGoalList(Vector)で実装しており、受け取った引数の内部の状態を下の
 
 <h3>実行例</h3>
 <!-- 実行例を示す．PNGやGIF等の絵を張っても良い．-->
