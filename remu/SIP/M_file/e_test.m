@@ -25,11 +25,15 @@ for k = 1: numdata_test
  if min > e2e_dist, min = e2e_dist; end;
  if min > e2o_dist, min = e2o_dist; end;
 
- if min == e2a_dist, e_answer = sprintf('%s\n', 'a'); count_a = count_a + 1;
- elseif min == e2i_dist, e_answer = sprintf('%s\n', 'i'); count_i = count_i + 1;
- elseif min == e2u_dist, e_answer = sprintf('%s\n', 'u'); count_u = count_u + 1;
+ if min == e2a_dist, e_answer = sprintf('%s\n', 'a'); count_a = count_a + 1; k
+     x = 'a'
+ elseif min == e2i_dist, e_answer = sprintf('%s\n', 'i'); count_i = count_i + 1; k
+     x = 'i'
+ elseif min == e2u_dist, e_answer = sprintf('%s\n', 'u'); count_u = count_u + 1; k
+     x = 'u'
  elseif min == e2e_dist, e_answer = sprintf('%s\n', 'e'); count_e = count_e + 1;
- elseif min == e2o_dist, e_answer = sprintf('%s\n', 'o'); count_o = count_o + 1;
+ elseif min == e2o_dist, e_answer = sprintf('%s\n', 'o'); count_o = count_o + 1; k
+     x = 'o'
  end;
 end;
 

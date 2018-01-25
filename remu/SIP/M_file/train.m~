@@ -1,9 +1,16 @@
-    filename = sprintf('../training/a11.wav');
+a_total_cep = zeros(256);
+i_total_cep = zeros(256);
+u_total_cep = zeros(256);
+e_total_cep = zeros(256);
+o_total_cep = zeros(256);
+
+for k = 1 : 12
+    filename = sprintf('../training/a%d.wav', k);
     a_train_data = wavread(filename);
     c = fix(length(a_train_data)/2);
     a_train_cut = a_train_data(c-127: c+128);
     a_train_rceps = real(ifft(log(abs(fft(a_train_cut)))));
-    a_train_cep = a_train_rceps(2:11);
+    a_total_cep = a_total_cep + a_train_rceps(2:11);
 
     filename = sprintf('../training/i11.wav');
     i_train_data = wavread(filename);
@@ -32,3 +39,4 @@
     o_train_cut = o_train_data(c-127: c+128);
     o_train_rceps = real(ifft(log(abs(fft(o_train_cut)))));
     o_train_cep = o_train_rceps(2:11);
+end;
