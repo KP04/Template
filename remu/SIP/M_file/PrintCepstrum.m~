@@ -1,5 +1,0 @@
-function PrintCepstrum(rceps)
-    rceps(1) = 0
-    rceps(21 : length(rceps)-21+1) = 0
-    
-    
